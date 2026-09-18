@@ -51,9 +51,13 @@ import { AttributionWaterfall } from './components/attribution-waterfall';
 import { WhatIfSimulator } from './components/whatif-simulator';
 import { ScenarioPresets, PRESET_SCENARIOS } from './components/scenario-presets';
 import { ExportReportModal } from './components/export-report-modal';
+import { GoalSeeker } from './components/goal-seeker';
+import { LensCopilot } from './components/lens-copilot';
+import { StakeholderGovernance } from './components/stakeholder-governance';
 import { ModelEvaluationPage } from './pages/model-evaluation';
 import { AuditTrailPage } from './pages/audit-trail';
 import { ScenarioComparisonPage } from './pages/scenario-comparison';
+import { Bot } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
@@ -745,6 +749,7 @@ function FactorCard({ factor }: { factor: DecisionFactor }) {
 function AnalysisPage() {
   const params = useParams<{ id: string }>();
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showCopilot, setShowCopilot] = useState(false);
   const analysisQuery = useGetDecision(params.id, {
     query: {
       queryKey: getGetDecisionQueryKey(params.id),
@@ -778,13 +783,18 @@ function AnalysisPage() {
 
   return (
     <div className="dl-content">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: '8px' }}>
         <Link href="/history" className="dl-link" style={{ margin: 0 }} data-testid="link-back-history">
           <ArrowLeft size={13} /> Back to decision history
         </Link>
-        <button className="dl-btn dl-btn-quiet" onClick={() => setShowExportModal(true)}>
-          <FileDown size={13} /> Export Executive Briefing
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="dl-btn dl-btn-quiet" onClick={() => setShowCopilot(true)}>
+            <Bot size={13} /> Ask Lens AI Copilot
+          </button>
+          <button className="dl-btn dl-btn-quiet" onClick={() => setShowExportModal(true)}>
+            <FileDown size={13} /> Export Executive Briefing
+          </button>
+        </div>
       </div>
 
       {/* Hero Card */}
@@ -842,6 +852,16 @@ function AnalysisPage() {
           <AttributionWaterfall factors={analysis.factors} overallScore={analysis.overallScore} />
         </section>
       </div>
+
+      {/* Goal Seeker Optimizer */}
+      <GoalSeeker
+        factors={analysis.factors}
+        currentScore={analysis.overallScore}
+        currentRecommendation={analysis.recommendation}
+      />
+
+      {/* Stakeholder Governance & Multi-Role Sign-Off */}
+      <StakeholderGovernance decision={analysis} />
 
       {/* Counterfactual Guidance */}
       {analysis.counterfactuals && analysis.counterfactuals.length > 0 && (
@@ -901,6 +921,13 @@ function AnalysisPage() {
       {showExportModal && (
         <ExportReportModal decision={analysis} onClose={() => setShowExportModal(false)} />
       )}
+
+      {/* AI Copilot Drawer */}
+      <LensCopilot
+        decision={analysis}
+        isOpen={showCopilot}
+        onClose={() => setShowCopilot(false)}
+      />
     </div>
   );
 }
