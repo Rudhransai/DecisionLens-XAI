@@ -9,6 +9,17 @@ interface GoalSeekerProps {
   onApplyPresetChanges?: (updatedValues: Record<string, number>) => void;
 }
 
+export interface Adjustment {
+  key: string;
+  label: string;
+  from: number;
+  to: number;
+  delta: number;
+  isInverse: boolean;
+  pointsGained: number;
+  recommendationNote: string;
+}
+
 const FACTOR_WEIGHTS: Record<string, number> = {
   strategicAlignment: 0.18,
   financialReadiness: 0.16,
@@ -31,7 +42,7 @@ export function GoalSeeker({ factors, currentScore, currentRecommendation, onApp
       return {
         feasible: true,
         neededPoints: 0,
-        adjustments: [],
+        adjustments: [] as Adjustment[],
         effortLevel: 'Target Already Met',
         summary: 'Current evaluation already satisfies or exceeds the selected target threshold.',
         highestLeverageFactor: null,

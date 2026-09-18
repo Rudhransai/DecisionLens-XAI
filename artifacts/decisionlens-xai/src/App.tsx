@@ -267,6 +267,87 @@ function OverviewPage() {
 
   return (
     <div className="dl-content">
+      {/* AIML 02 Problem Statement Alignment Banner for Judges */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #0f2c25 0%, #173d34 100%)',
+          borderRadius: '10px',
+          padding: '14px 18px',
+          marginBottom: '20px',
+          color: '#ffffff',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          border: '1px solid #235d50',
+          boxShadow: '0 4px 12px rgba(13, 59, 51, 0.12)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span
+            style={{
+              background: '#2dd4bf',
+              color: '#0a231d',
+              fontWeight: 800,
+              fontSize: '11px',
+              fontFamily: 'var(--app-font-mono)',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              letterSpacing: '0.5px',
+            }}
+          >
+            AIML 02 HACKATHON
+          </span>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#f0fdf4' }}>
+              Explainable AI Decision Support System
+            </div>
+            <div style={{ fontSize: '11px', color: '#99f6e4', marginTop: '2px' }}>
+              Decomposed Predictions • 7-Factor Attributions • Calibrated Confidence • Inverse Counterfactuals
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Link
+            href="/new"
+            style={{
+              background: '#2dd4bf',
+              color: '#082f27',
+              fontSize: '11px',
+              fontWeight: 700,
+              padding: '6px 12px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <Sparkles size={12} /> Test Live Scenarios
+          </Link>
+          <Link
+            href="/evaluation"
+            style={{
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 600,
+              padding: '6px 12px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+            }}
+          >
+            <ShieldCheck size={12} /> Model Calibration &amp; ROC-AUC
+          </Link>
+        </div>
+      </div>
+
       <div className="dl-heading-row">
         <div>
           <div className="dl-eyebrow">Explainable AI Decision Platform</div>
