@@ -1,0 +1,543 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: DecisionLens XAI API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: decisions
+    description: Explainable decision-support operations
+  - name: model
+    description: Model governance and evaluation operations
+  - name: audit
+    description: Audit trail operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /decisions/analyze:
+    post:
+      operationId: analyzeDecision
+      tags: [decisions]
+      summary: Analyze a scenario
+      description: Scores an operational readiness scenario and returns a recommendation with explainability details.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DecisionInput"
+      responses:
+        "200":
+          description: Explainable decision analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionAnalysis"
+        "400":
+          description: Invalid decision input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /decisions:
+    get:
+      operationId: listDecisions
+      tags: [decisions]
+      summary: List recent decisions
+      description: Returns recent saved decision analyses for the workspace.
+      responses:
+        "200":
+          description: Recent decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DecisionSummary"
+  /decisions/{id}:
+    get:
+      operationId: getDecision
+      tags: [decisions]
+      summary: Get one decision analysis
+      description: Returns the complete explainability readout for one saved decision.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Explainability readout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionAnalysis"
+        "404":
+          description: Decision not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /decisions/summary:
+    get:
+      operationId: getDecisionSummary
+      tags: [decisions]
+      summary: Get decision workspace summary
+      description: Returns aggregate metrics used by the dashboard overview.
+      responses:
+        "200":
+          description: Decision summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionWorkspaceSummary"
+  /decisions/compare:
+    post:
+      operationId: compareDecisions
+      tags: [decisions]
+      summary: Compare multiple decisions
+      description: Compares 2 or more decisions side-by-side and returns delta metrics.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompareDecisionsInput"
+      responses:
+        "200":
+          description: Comparison analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionComparisonResult"
+  /model/evaluation:
+    get:
+      operationId: getModelEvaluation
+      tags: [model]
+      summary: Get model evaluation & governance metrics
+      description: Returns benchmark accuracy, calibration, fairness metrics, and feature sensitivity curves.
+      responses:
+        "200":
+          description: Model evaluation metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelEvaluationResult"
+  /audit-logs:
+    get:
+      operationId: getAuditLogs
+      tags: [audit]
+      summary: Get audit trail logs
+      description: Returns immutable historical audit trail of all decision evaluations.
+      responses:
+        "200":
+          description: Audit logs list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLogEntry"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    DecisionInput:
+      type: object
+      properties:
+        scenarioName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        context:
+          type: string
+          maxLength: 600
+        strategicAlignment:
+          type: integer
+          minimum: 0
+          maximum: 100
+        financialReadiness:
+          type: integer
+          minimum: 0
+          maximum: 100
+        technicalReadiness:
+          type: integer
+          minimum: 0
+          maximum: 100
+        teamReadiness:
+          type: integer
+          minimum: 0
+          maximum: 100
+        marketEvidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+        riskExposure:
+          type: integer
+          minimum: 0
+          maximum: 100
+        timelinePressure:
+          type: integer
+          minimum: 0
+          maximum: 100
+      required:
+        - scenarioName
+        - strategicAlignment
+        - financialReadiness
+        - technicalReadiness
+        - teamReadiness
+        - marketEvidence
+        - riskExposure
+        - timelinePressure
+    DecisionFactor:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        score:
+          type: integer
+        impact:
+          type: number
+        direction:
+          type: string
+          enum: [positive, negative, neutral]
+        explanation:
+          type: string
+      required:
+        - key
+        - label
+        - score
+        - impact
+        - direction
+        - explanation
+    CounterfactualAdjustment:
+      type: object
+      properties:
+        factorKey:
+          type: string
+        factorLabel:
+          type: string
+        currentScore:
+          type: integer
+        requiredScore:
+          type: integer
+        delta:
+          type: integer
+        direction:
+          type: string
+        targetRecommendation:
+          type: string
+        explanation:
+          type: string
+      required:
+        - factorKey
+        - factorLabel
+        - currentScore
+        - requiredScore
+        - delta
+        - direction
+        - targetRecommendation
+        - explanation
+    UncertaintyInterval:
+      type: object
+      properties:
+        minScore:
+          type: integer
+        maxScore:
+          type: integer
+        volatilityIndex:
+          type: number
+        varianceDescription:
+          type: string
+      required:
+        - minScore
+        - maxScore
+        - volatilityIndex
+        - varianceDescription
+    DecisionAnalysis:
+      type: object
+      properties:
+        id:
+          type: string
+        scenarioName:
+          type: string
+        context:
+          type: ["string", "null"]
+        recommendation:
+          type: string
+          enum: [proceed, guardrails, rework]
+        recommendationLabel:
+          type: string
+        overallScore:
+          type: integer
+        confidence:
+          type: integer
+        confidenceLabel:
+          type: string
+        rationale:
+          type: string
+        factors:
+          type: array
+          items:
+            $ref: "#/components/schemas/DecisionFactor"
+        nextSteps:
+          type: array
+          items:
+            type: string
+        counterfactuals:
+          type: array
+          items:
+            $ref: "#/components/schemas/CounterfactualAdjustment"
+        uncertaintyInterval:
+          $ref: "#/components/schemas/UncertaintyInterval"
+        modelVersion:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - scenarioName
+        - context
+        - recommendation
+        - recommendationLabel
+        - overallScore
+        - confidence
+        - confidenceLabel
+        - rationale
+        - factors
+        - nextSteps
+        - createdAt
+    DecisionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        scenarioName:
+          type: string
+        recommendation:
+          type: string
+          enum: [proceed, guardrails, rework]
+        recommendationLabel:
+          type: string
+        overallScore:
+          type: integer
+        confidence:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - scenarioName
+        - recommendation
+        - recommendationLabel
+        - overallScore
+        - confidence
+        - createdAt
+    DecisionWorkspaceSummary:
+      type: object
+      properties:
+        totalDecisions:
+          type: integer
+        averageConfidence:
+          type: integer
+        proceedCount:
+          type: integer
+        guardrailsCount:
+          type: integer
+        reworkCount:
+          type: integer
+        latestDecision:
+          oneOf:
+            - $ref: "#/components/schemas/DecisionAnalysis"
+            - type: "null"
+      required:
+        - totalDecisions
+        - averageConfidence
+        - proceedCount
+        - guardrailsCount
+        - reworkCount
+        - latestDecision
+    CompareDecisionsInput:
+      type: object
+      properties:
+        decisionIds:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 4
+      required:
+        - decisionIds
+    DecisionComparisonResult:
+      type: object
+      properties:
+        decisions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DecisionAnalysis"
+        scoreDeltas:
+          type: object
+          additionalProperties:
+            type: number
+        strongestFactorPerDecision:
+          type: object
+          additionalProperties:
+            type: string
+        strategicTakeaway:
+          type: string
+      required:
+        - decisions
+        - scoreDeltas
+        - strongestFactorPerDecision
+        - strategicTakeaway
+    ModelMetricBenchmark:
+      type: object
+      properties:
+        metric:
+          type: string
+        score:
+          type: number
+        benchmark:
+          type: number
+        status:
+          type: string
+          enum: [optimal, good, warning]
+      required:
+        - metric
+        - score
+        - benchmark
+        - status
+    FeatureImportanceItem:
+      type: object
+      properties:
+        factorKey:
+          type: string
+        factorLabel:
+          type: string
+        weight:
+          type: number
+        globalImportance:
+          type: number
+      required:
+        - factorKey
+        - factorLabel
+        - weight
+        - globalImportance
+    ModelEvaluationResult:
+      type: object
+      properties:
+        modelVersion:
+          type: string
+        architecture:
+          type: string
+        sampleCount:
+          type: integer
+        accuracy:
+          type: number
+        precision:
+          type: number
+        recall:
+          type: number
+        f1Score:
+          type: number
+        brierScore:
+          type: number
+        rocAuc:
+          type: number
+        calibrationStatus:
+          type: string
+        fairnessScore:
+          type: number
+        driftStatus:
+          type: string
+        lastTrainedAt:
+          type: string
+        benchmarks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModelMetricBenchmark"
+        featureImportance:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureImportanceItem"
+      required:
+        - modelVersion
+        - architecture
+        - sampleCount
+        - accuracy
+        - precision
+        - recall
+        - f1Score
+        - brierScore
+        - rocAuc
+        - calibrationStatus
+        - fairnessScore
+        - driftStatus
+        - lastTrainedAt
+        - benchmarks
+        - featureImportance
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        decisionId:
+          type: string
+        scenarioName:
+          type: string
+        modelVersion:
+          type: string
+        actor:
+          type: string
+        action:
+          type: string
+        overallScore:
+          type: integer
+        recommendation:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - id
+        - decisionId
+        - scenarioName
+        - modelVersion
+        - actor
+        - action
+        - overallScore
+        - recommendation
+        - timestamp

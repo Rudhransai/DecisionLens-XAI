@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "DecisionLens XAI"
+description = "An explainable AI decision-support workspace for exploring high-stakes scenarios, reviewing predicted outcomes, understanding the factors behind them, and communicating confidence clearly."
+version = "1.0.0"
+id = "artifacts/decisionlens-xai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18834
+
+[services.development]
+run = "pnpm --filter @workspace/decisionlens-xai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/decisionlens-xai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/decisionlens-xai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18834"
+BASE_PATH = "/"
