@@ -533,6 +533,63 @@ function ScenarioBuilder() {
     );
   };
 
+  const [autoEstimated, setAutoEstimated] = useState(false);
+
+  const handleAutoEstimate = () => {
+    const text = `${form.scenarioName} ${form.context || ''}`.toLowerCase();
+    if (!text.trim()) return;
+
+    let strategic = 70;
+    let financial = 65;
+    let technical = 68;
+    let team = 70;
+    let market = 65;
+    let risk = 35;
+    let timeline = 40;
+
+    // Strategic Alignment keywords
+    if (text.includes('critical') || text.includes('priority') || text.includes('executive') || text.includes('strategic') || text.includes('core') || text.includes('board') || text.includes('vision')) strategic = 92;
+    else if (text.includes('experimental') || text.includes('side project') || text.includes('unaligned') || text.includes('exploratory')) strategic = 50;
+
+    // Financial Readiness keywords
+    if (text.includes('budget') || text.includes('funded') || text.includes('capital') || text.includes('roi') || text.includes('profitable') || text.includes('revenue') || text.includes('savings')) financial = 84;
+    else if (text.includes('costly') || text.includes('expensive') || text.includes('unfunded') || text.includes('tight budget') || text.includes('deficit')) financial = 42;
+
+    // Technical Readiness keywords
+    if (text.includes('tested') || text.includes('proven') || text.includes('architecture') || text.includes('cloud') || text.includes('pipeline') || text.includes('infrastructure') || text.includes('mature')) technical = 85;
+    else if (text.includes('legacy') || text.includes('debt') || text.includes('untested') || text.includes('complex') || text.includes('fragile') || text.includes('bugs')) technical = 45;
+
+    // Team Readiness keywords
+    if (text.includes('certified') || text.includes('experienced') || text.includes('skilled') || text.includes('dedicated team') || text.includes('bandwidth') || text.includes('ownership')) team = 82;
+    else if (text.includes('understaffed') || text.includes('shortage') || text.includes('unfamiliar') || text.includes('bandwidth crunch') || text.includes('attrition')) team = 40;
+
+    // Market Evidence keywords
+    if (text.includes('demand') || text.includes('customers') || text.includes('market') || text.includes('validation') || text.includes('adoption') || text.includes('users') || text.includes('traction')) market = 86;
+    else if (text.includes('unproven') || text.includes('niche') || text.includes('assumption') || text.includes('unvalidated') || text.includes('competitor')) market = 48;
+
+    // Risk Exposure keywords (inverted: higher = more dangerous)
+    if (text.includes('emergency') || text.includes('risk') || text.includes('security') || text.includes('compliance') || text.includes('hipaa') || text.includes('gdpr') || text.includes('downtime') || text.includes('outage') || text.includes('vulnerability')) risk = 75;
+    else if (text.includes('safe') || text.includes('isolated') || text.includes('sandbox') || text.includes('low risk') || text.includes('reversion plan')) risk = 20;
+
+    // Timeline Pressure keywords (inverted: higher = more rushed)
+    if (text.includes('urgent') || text.includes('immediate') || text.includes('asap') || text.includes('rush') || text.includes('tight deadline') || text.includes('days') || text.includes('pressure') || text.includes('emergency')) timeline = 80;
+    else if (text.includes('phased') || text.includes('flexible') || text.includes('quarterly') || text.includes('buffer') || text.includes('relaxed')) timeline = 25;
+
+    setForm((prev) => ({
+      ...prev,
+      strategicAlignment: strategic,
+      financialReadiness: financial,
+      technicalReadiness: technical,
+      teamReadiness: team,
+      marketEvidence: market,
+      riskExposure: risk,
+      timelinePressure: timeline,
+    }));
+
+    setAutoEstimated(true);
+    setTimeout(() => setAutoEstimated(false), 3000);
+  };
+
   return (
     <div className="dl-content">
       <div className="dl-heading-row">
@@ -542,7 +599,7 @@ function ScenarioBuilder() {
             Build the case<br /><em>before the meeting.</em>
           </h1>
           <p className="dl-page-lede">
-            Give the analysis room the signal it needs. Test presets, observe live projected scores, and receive a complete mathematical attribution readout.
+            Give the analysis room the signal it needs. Type your scenario description or test presets — the AI auto-estimates the 7 factors or you can tune them manually.
           </p>
         </div>
         <div style={{ color: '#84918c', font: '600 10px var(--app-font-mono)' }}>
@@ -593,29 +650,50 @@ function ScenarioBuilder() {
               maxLength={120}
               value={form.scenarioName}
               onChange={(event) => setField('scenarioName', event.target.value)}
-              placeholder="e.g. Enterprise AI Agent Automation Rollout"
+              placeholder="e.g. Emergency Core Banking Migration under Tight Deadline"
               data-testid="input-scenario-name"
             />
             <span className="dl-field-hint">A concise title for decision logs and stakeholder briefings.</span>
           </div>
 
           <div className="dl-field">
-            <label htmlFor="context">
-              Context <span style={{ fontWeight: 400, color: '#89958f' }}>· optional</span>
-            </label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label htmlFor="context">
+                Context &amp; Situation Description <span style={{ fontWeight: 400, color: '#89958f' }}>· optional</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleAutoEstimate}
+                style={{
+                  background: '#e0f2ec',
+                  color: 'var(--dl-teal)',
+                  border: '1px solid #b8ded0',
+                  borderRadius: '4px',
+                  padding: '3px 8px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <Sparkles size={11} /> {autoEstimated ? '✓ 7 Factors Auto-Estimated!' : '⚡ AI Auto-Estimate 7 Factors from Text'}
+              </button>
+            </div>
             <textarea
               id="context"
               className="dl-textarea"
               maxLength={600}
               value={form.context}
               onChange={(event) => setField('context', event.target.value)}
-              placeholder="What makes this decision timely, and what are the primary trade-offs?"
+              placeholder="Describe what makes this decision timely, the emergency constraints, budget, team experience, or compliance risks..."
               data-testid="input-scenario-context"
             />
             <span className="dl-field-hint">{form.context?.length ?? 0} / 600 characters</span>
           </div>
 
-          <div className="dl-field-divider">Readiness Signals</div>
+          <div className="dl-field-divider">7 Operational Readiness Signals</div>
 
           {sliders.map((key) => (
             <div className="dl-field" key={key}>
