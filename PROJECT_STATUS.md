@@ -36,7 +36,7 @@
 - [x] **Model Evaluation & Calibration Suite**:
   - Confusion Matrix & Performance Metrics (Accuracy, Precision, Recall, F1-Score, ROC-AUC).
   - Calibration Curve & Reliability Diagram.
-- [x] **Decision Report Export Modal**: Export full decision dossiers to **Markdown**, **JSON**, or copy formatted summaries directly to clipboard for executive reviews.
+- [x] **Decision Report Export Modal**: Export full decision dossiers to **PDF (Automated auto-download report using jsPDF)**, **Markdown**, **JSON**, or copy formatted summaries directly to clipboard for executive reviews.
 - [x] **Decision History & Filtering**: Search, tag filtering, and sorting across saved decisions.
 - [x] **Design & Aesthetics**: Sleek modern dark mode UI with glassmorphism, responsive cards, and micro-interactions.
 
@@ -64,14 +64,14 @@
 
 ## 🚀 What Needs to Be Completed / Future Roadmap
 
-| Priority | Feature / Task | Description |
-| :--- | :--- | :--- |
-| **High** | **PostgreSQL Database Integration** | Connect live Postgres database via `DATABASE_URL` and run Drizzle migrations for persistent storage across server restarts. |
-| **Medium** | **User Authentication & RBAC** | Add OAuth (Google/GitHub) or JWT authentication with Role-Based Access Control (Viewer, Analyst, Executive Approver). |
-| **Medium** | **PDF Report Export** | Implement server-side or client-side PDF document generation (using jsPDF / Puppeteer) alongside existing Markdown and JSON exports. |
-| **Low** | **Custom Weight Configuration** | Allow organizational administrators to define custom weights per factor (e.g. prioritize Financial Readiness over Timeline Pressure). |
-| **Low** | **Team Collaboration & Comments** | Enable inline comments and stakeholder approval workflows on specific decision dossiers. |
-| **Low** | **Automated CI/CD Pipeline** | GitHub Actions workflow for automated linting, typechecking, running test suites, and Docker container build. |
+| Priority | Feature / Task | Description | Status |
+| :--- | :--- | :--- | :--- |
+| **High** | **Automated PDF Report Export** | Generated clean executive briefing PDFs directly with `jsPDF` for instant download. | ✅ Completed |
+| **High** | **PostgreSQL Database Integration** | Connect live Postgres database via `DATABASE_URL` and run Drizzle migrations for persistent storage across server restarts. | Pending |
+| **Medium** | **User Authentication & RBAC** | Add OAuth (Google/GitHub) or JWT authentication with Role-Based Access Control (Viewer, Analyst, Executive Approver). | Pending |
+| **Low** | **Custom Weight Configuration** | Allow organizational administrators to define custom weights per factor (e.g. prioritize Financial Readiness over Timeline Pressure). | Pending |
+| **Low** | **Team Collaboration & Comments** | Enable inline comments and stakeholder approval workflows on specific decision dossiers. | Pending |
+| **Low** | **Automated CI/CD Pipeline** | GitHub Actions workflow for automated linting, typechecking, running test suites, and Docker container build. | Pending |
 
 ---
 

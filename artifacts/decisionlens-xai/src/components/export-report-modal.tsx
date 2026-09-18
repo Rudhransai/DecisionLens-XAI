@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Printer, FileDown, Download } from 'lucide-react';
+import { X, Copy, Check, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 import type { DecisionAnalysis } from '@workspace/api-client-react';
 
 interface ExportReportModalProps {
@@ -9,7 +10,8 @@ interface ExportReportModalProps {
 
 export function ExportReportModal({ decision, onClose }: ExportReportModalProps) {
   const [copied, setCopied] = useState(false);
-  const [format, setFormat] = useState<'markdown' | 'json' | 'executive'>('executive');
+  const [downloading, setDownloading] = useState(false);
+  const [format, setFormat] = useState<'executive' | 'markdown' | 'json'>('executive');
 
   const formattedDate = new Date(decision.createdAt).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -64,8 +66,189 @@ ${decision.nextSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleDownloadPdf = () => {
+    setDownloading(true);
+    try {
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 40;
+      const contentWidth = pageWidth - margin * 2;
+      let y = 45;
+
+      const checkNewPage = (needed: number = 30) => {
+        if (y + needed > pageHeight - margin) {
+          doc.addPage();
+          y = 45;
+        }
+      };
+
+      // Header Banner
+      doc.setFillColor(15, 23, 42); // slate-900
+      doc.rect(0, 0, pageWidth, 60, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('DECISIONLENS XAI — EXECUTIVE BRIEFING', margin, 38);
+
+      y = 80;
+
+      // Metadata Box
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(margin, y, contentWidth, 75, 4, 4, 'FD');
+
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(decision.scenarioName, margin + 12, y + 22);
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Date: ${formattedDate}  |  Model: ${decision.modelVersion || 'v1.4-Hybrid'}`, margin + 12, y + 38);
+
+      doc.setFont('helvetica', 'bold');
+      const recColor = decision.recommendationLabel.toLowerCase().includes('proceed') ? [22, 163, 74] : [217, 119, 6];
+      doc.setTextColor(recColor[0], recColor[1], recColor[2]);
+      doc.text(`Recommendation: ${decision.recommendationLabel.toUpperCase()}`, margin + 12, y + 58);
+
+      doc.setTextColor(30, 41, 59);
+      doc.text(`Score: ${decision.overallScore}/100   Confidence: ${decision.confidence}% (${decision.confidenceLabel})`, margin + 240, y + 58);
+
+      y += 95;
+
+      // Executive Summary
+      checkNewPage(50);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text('Executive Summary', margin, y);
+      y += 6;
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(203, 213, 225);
+      doc.line(margin, y, margin + contentWidth, y);
+      y += 15;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(51, 65, 85);
+      const rationaleLines = doc.splitTextToSize(decision.rationale, contentWidth);
+      rationaleLines.forEach((line: string) => {
+        checkNewPage(14);
+        doc.text(line, margin, y);
+        y += 14;
+      });
+
+      y += 15;
+
+      // Operational Context if exists
+      if (decision.context) {
+        checkNewPage(40);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text('Operational Context', margin, y);
+        y += 6;
+        doc.line(margin, y, margin + contentWidth, y);
+        y += 15;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        const contextLines = doc.splitTextToSize(decision.context, contentWidth);
+        contextLines.forEach((line: string) => {
+          checkNewPage(14);
+          doc.text(line, margin, y);
+          y += 14;
+        });
+        y += 15;
+      }
+
+      // Factor Breakdown Table
+      checkNewPage(60);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text('Factor Breakdown & Impact Attribution', margin, y);
+      y += 6;
+      doc.line(margin, y, margin + contentWidth, y);
+      y += 15;
+
+      decision.factors.forEach((factor) => {
+        checkNewPage(42);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
+        const impactStr = `${factor.impact > 0 ? '+' : ''}${factor.impact} pts (${factor.direction})`;
+        doc.text(`• ${factor.label}`, margin + 5, y);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(factor.impact > 0 ? 22 : 220, factor.impact > 0 ? 163 : 38, factor.impact > 0 ? 74 : 38);
+        doc.text(`Score: ${factor.score}/100  |  Impact: ${impactStr}`, margin + 260, y);
+        y += 14;
+
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139);
+        const expLines = doc.splitTextToSize(factor.explanation, contentWidth - 15);
+        expLines.forEach((line: string) => {
+          checkNewPage(12);
+          doc.text(line, margin + 15, y);
+          y += 12;
+        });
+        y += 8;
+      });
+
+      y += 10;
+
+      // Recommended Next Steps
+      if (decision.nextSteps && decision.nextSteps.length > 0) {
+        checkNewPage(50);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text('Recommended Action Items', margin, y);
+        y += 6;
+        doc.line(margin, y, margin + contentWidth, y);
+        y += 15;
+
+        decision.nextSteps.forEach((step, idx) => {
+          checkNewPage(20);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(51, 65, 85);
+          const stepLines = doc.splitTextToSize(`${idx + 1}. ${step}`, contentWidth - 10);
+          stepLines.forEach((line: string) => {
+            checkNewPage(14);
+            doc.text(line, margin + 5, y);
+            y += 14;
+          });
+          y += 4;
+        });
+      }
+
+      // Footer
+      const totalPages = (doc.internal as any).getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+          `DecisionLens XAI  |  Confidential Decision Support Report  |  Page ${i} of ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 20,
+          { align: 'center' }
+        );
+      }
+
+      const safeName = decision.scenarioName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      doc.save(`DecisionLens_Report_${safeName}.pdf`);
+    } catch (err) {
+      console.error('Failed to generate PDF report:', err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -97,27 +280,33 @@ ${decision.nextSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}
               onClick={() => setFormat(fmt)}
               className={`dl-filter ${format === fmt ? 'active' : ''}`}
             >
-              {fmt === 'executive' ? 'Executive Report' : fmt === 'markdown' ? 'Markdown' : 'Raw JSON'}
+              {fmt === 'executive' ? 'Executive PDF Report' : fmt === 'markdown' ? 'Markdown' : 'Raw JSON'}
             </button>
           ))}
         </div>
 
-        {/* Content Box */}
+        {/* Content Preview Box */}
         <div className="dl-modal-pre">
           <code>{getExportText()}</code>
         </div>
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-          <button className="dl-btn dl-btn-quiet" onClick={handlePrint}>
-            <Printer size={13} /> Print / Save PDF
-          </button>
-          <button className="dl-btn dl-btn-primary" onClick={handleCopy}>
+          <button className="dl-btn dl-btn-quiet" onClick={handleCopy}>
             {copied ? <Check size={13} /> : <Copy size={13} />}
-            {copied ? 'Copied to Clipboard' : 'Copy Content'}
+            {copied ? 'Copied to Clipboard' : 'Copy Text'}
+          </button>
+          <button
+            className="dl-btn dl-btn-primary"
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+          >
+            <Download size={13} />
+            {downloading ? 'Generating PDF...' : 'Download PDF Report'}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
